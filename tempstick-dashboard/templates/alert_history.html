@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Temp Stick Alert History</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            line-height: 1.5;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            margin-top: 30px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .alert-block {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ccc;
+        }
+        .status-ok {
+            color: green;
+            font-weight: bold;
+        }
+        .status-miss {
+            color: red;
+            font-weight: bold;
+        }
+        .match-details {
+            margin-left: 15px;
+            font-size: 0.95em;
+            color: #444;
+        }
+        .label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Temp Stick Alert History (Past {{ history_days }} Days)</h1>
+        {% for sensor in sensors_data %}
+            <h2>{{ sensor.name }}</h2>
+            {% for period in sensor.alert_periods %}
+                <div class="alert-block">
+                    <div><span class="label">{{ period.type }}</span></div>
+                    <div>{{ period.start }} to {{ period.end }}</div>
+                    <div>Status:
+                        {% if period.match_status == '✅ Matched' %}
+                            <span class="status-ok">{{ period.match_status }}</span>
+                        {% else %}
+                            <span class="status-miss">{{ period.match_status }}</span>
+                        {% endif %}
+                    </div>
+                    {% if period.match_status == '✅ Matched' %}
+                        <div class="match-details">
+                            <p><strong>Incident Time:</strong> {{ period.match_time }}</p>
+                            <p><strong>Incident ID:</strong> {{ period.incident_id }}</p>
+                            <p><strong>Mitigation Efforts:</strong> {{ period.mitigation_efforts or "N/A" }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</body>
+</html>

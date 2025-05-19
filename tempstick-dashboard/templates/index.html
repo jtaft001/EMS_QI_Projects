@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temp Stick Gauge Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f8f9fa; }
+        h1 { text-align: center; color: #333; }
+        p#last-updated-container { text-align: center; color: #555; }
+        hr { border: 0; height: 1px; background-color: #ddd; margin: 20px 0; }
+
+        /* Link Style */
+        .nav-link { text-align:center; margin-bottom: 15px; font-size: 1.1em; }
+
+        /* Styles for Attention Summary Box */
+        #attention-summary { border: 1px solid #dee2e6; background-color: #fff; padding: 15px 20px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        #attention-summary h2 { margin-top: 0; margin-bottom: 10px; text-align: left; font-size: 1.3em; color: #c82333; }
+        #attention-summary ul { list-style: none; padding: 0; margin: 0; }
+        #attention-summary li { margin-bottom: 8px; padding: 5px 0; border-bottom: 1px dashed #eee; } /* Corrected selector */
+        #attention-summary li:last-child { border-bottom: none; }
+        #attention-summary .status-indicator { width: 18px; height: 18px; border: 1px solid #555; margin-right: 8px; border-radius: 3px; display: inline-block; vertical-align: middle; }
+        .status-red-low{background-color:#dc3545;} .status-yellow-low{background-color:#ffc107;}
+        .status-green-ok{background-color:#28a745;} .status-yellow-high{background-color:#ffc107;}
+        .status-red-high{background-color:#dc3545;} .status-no-temp{background-color:#6c757d;}
+        .status-conv-err{background-color:#ff8c00;}
+        #attention-summary .sensor-link { color: #0056b3; text-decoration: none; font-weight: bold;}
+        #attention-summary .sensor-link:hover { text-decoration: underline; }
+        #attention-summary .sensor-temp-info { color: #444; margin-left: 5px; }
+        #attention-summary .no-attention { font-style: italic; color: #155724; background-color: #d4edda; padding: 10px; text-align: center; border-radius: 3px; margin-top: 10px; }
+
+        /* Main Gauge Grid Styles */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .sensor-gauge-block { border: 1px solid #ccc; padding: 15px; text-align: center; border-radius: 8px; background-color: #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
+        .gauge-canvas { width: 100%; max-width: 200px; height: auto; aspect-ratio: 2 / 1; margin: 5px auto; }
+        .sensor-name { font-weight: bold; margin-bottom: 5px; font-size: 1.1em; color: #222; }
+        .current-temp { font-size: 1.2em; margin-top: 5px; font-weight: bold; }
+        .timestamp { font-size: 0.8em; color: #666; margin-top: auto; padding-top: 10px; }
+         .gauge-text { font-size: 1.2em; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Temp Stick Gauge Dashboard</h1>
+    <p id="last-updated-container">Last Updated: <span id="last-updated">Never</span></p>
+    <hr>
+
+    <p class="nav-link">
+        <a href="/alert_history">View Alert History Summary</a>
+    </p>
+    <div id="attention-summary">
+        <h2 id="summary-heading">Needs Attention</h2>
+        <p id="no-attention-msg" class="no-attention" style="display: none;">All sensors are within the OK range.</p>
+        </div>
+    <div class="dashboard-grid" id="dashboard-grid">
+        {% if sensors and sensors|length > 0 %}
+            {% for sensor in sensors %}
+            <div class="sensor-gauge-block" id="sensor-{{ sensor.id }}">
+                 <div class="sensor-name">{{ sensor.name }} <span style='font-size:0.7em; color:#777;'>({{ sensor.id }})</span></div>
+                <canvas id="gauge-{{ sensor.id }}" class="gauge-canvas"></canvas>
+                <div class="current-temp" id="temp-{{ sensor.id }}">--°F</div>
+                 <div class="timestamp" id="time-{{ sensor.id }}">No data yet</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No sensors found or unable to retrieve sensor list.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        const gauges = {};
+        const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+        // --- Gauge Configuration ---
+        const GAUGE_MIN_VALUE = 0;
+        const GAUGE_MAX_VALUE = 120; // Adjust max based on expected range
+
+        const staticZones = [
+           {strokeStyle: "#dc3545", min: GAUGE_MIN_VALUE, max: 35}, {strokeStyle: "#ffc107", min: 35, max: 40},
+           {strokeStyle: "#28a745", min: 40, max: 90}, {strokeStyle: "#fd7e14", min: 90, max: 95},
+           {strokeStyle: "#dc3545", min: 95, max: GAUGE_MAX_VALUE}
+        ];
+
+        const gaugeOptions = {
+            angle: 0.0, lineWidth: 0.2, radiusScale: 0.85,
+            pointer: { length: 0.5, strokeWidth: 0.045, color: '#000000' },
+            limitMax: true, limitMin: true, minValue: GAUGE_MIN_VALUE, maxValue: GAUGE_MAX_VALUE,
+            strokeColor: '#E0E0E0', staticZones: staticZones,
+            staticLabels: { font: "10px sans-serif", labels: [GAUGE_MIN_VALUE, 40, 90, GAUGE_MAX_VALUE], color: "#000000", fractionDigits: 0 },
+            renderTicks: { divisions: 12, divWidth: 1, divLength: 0.08, divColor: '#333333', subDivisions: 4, subLength: 0.05, subWidth: 0.6, subColor: '#666666' },
+            highDpiSupport: true // Corrected: Removed problematic percentColors: null
+        };
+        // --- End Gauge Configuration ---
+
+        function updateGauges(sensorData) {
+            const now = new Date();
+            document.getElementById('last-updated').textContent = now.toLocaleString();
+
+            // --- Update Attention Summary Box ---
+            const attentionSummaryDiv = document.getElementById('attention-summary');
+            const noAttentionMessage = document.getElementById('no-attention-msg');
+            const existingList = attentionSummaryDiv.querySelector('ul');
+            if (existingList) { attentionSummaryDiv.removeChild(existingList); }
+
+            const sensorsNeedingAttention = sensorData.filter(sensor =>
+                sensor.status && sensor.status !== 'green_ok' && sensor.status !== 'no_temp' && sensor.status !== 'conv_err'
+            );
+
+            // Sort by temperature descending
+            sensorsNeedingAttention.sort((a, b) => (b.temp_f ?? -Infinity) - (a.temp_f ?? -Infinity));
+
+            if (sensorsNeedingAttention.length > 0) {
+                noAttentionMessage.style.display = 'none';
+                const ul = document.createElement('ul');
+                sensorsNeedingAttention.forEach(sensor => {
+                    const li = document.createElement('li');
+                    let statusClass = "status-no-temp"; // Determine status CSS class
+                    if (sensor.status === 'red_low') statusClass = "status-red-low";
+                    else if (sensor.status === 'yellow_low') statusClass = "status-yellow-low";
+                    else if (sensor.status === 'yellow_high') statusClass = "status-yellow-high";
+                    else if (sensor.status === 'red_high') statusClass = "status-red-high";
+
+                    const anchor = document.createElement('a'); // Create link to gauge block
+                    anchor.href = `#sensor-${sensor.id}`; // Uses ID from JSON data (which is sensor_id)
+                    anchor.className = 'sensor-link';
+                    anchor.textContent = `${sensor.name}`;
+
+                    const tempText = sensor.temp_f !== null ? `${sensor.temp_f.toFixed(1)}°F` : '(No Temp)';
+
+                    li.innerHTML = `<span class='status-indicator ${statusClass}' title='${sensor.status}'></span> `;
+                    li.appendChild(anchor);
+                    li.innerHTML += ` <span class='sensor-temp-info'>(${tempText})</span>`;
+                    ul.appendChild(li);
+                });
+                attentionSummaryDiv.appendChild(ul);
+            } else {
+                noAttentionMessage.style.display = 'block';
+            }
+            // --- End Update Attention Summary Box ---
+
+
+            // --- Update Individual Gauges ---
+            sensorData.forEach(sensor => {
+                // Use sensor.id from JSON data (which holds the sensor_id value)
+                const gaugeElementId = `gauge-${sensor.id}`;
+                const tempElementId = `temp-${sensor.id}`;
+                const timeElementId = `time-${sensor.id}`;
+                const gaugeCanvas = document.getElementById(gaugeElementId);
+                const tempDiv = document.getElementById(tempElementId);
+                const timeDiv = document.getElementById(timeElementId);
+
+                if (!gaugeCanvas || !tempDiv || !timeDiv) { return; } // Skip if elements missing
+
+                timeDiv.textContent = sensor.timestamp || 'N/A';
+
+                if (sensor.temp_f !== null && sensor.temp_f !== undefined) {
+                    const currentTempF = sensor.temp_f;
+                    tempDiv.textContent = `${currentTempF.toFixed(1)}°F`;
+                    if (!gauges[sensor.id]) { // Create gauge if new
+                        gauges[sensor.id] = new Gauge(gaugeCanvas).setOptions(gaugeOptions);
+                        gauges[sensor.id].minValue = GAUGE_MIN_VALUE;
+                        gauges[sensor.id].maxValue = GAUGE_MAX_VALUE;
+                        gauges[sensor.id].set(currentTempF); // Set initial value
+                    } else { // Update existing gauge
+                        gauges[sensor.id].set(currentTempF);
+                    }
+                } else { // Handle no temperature data
+                    tempDiv.textContent = '--°F';
+                    if (gauges[sensor.id]) { gauges[sensor.id].set(GAUGE_MIN_VALUE); } // Reset gauge to min
+                }
+            });
+             // --- End Update Individual Gauges ---
+        }
+
+        async function fetchData() {
+            // console.log(`Workspaceing updated data at ${new Date().toLocaleTimeString()}...`); // Uncomment for debug
+            try {
+                const response = await fetch('/data'); // Fetch data from Flask backend
+                if (!response.ok) { throw new Error(`HTTP error! Status: ${response.status}`); }
+                const sensorData = await response.json(); // Parse JSON data
+                updateGauges(sensorData); // Update UI
+            } catch (error) {
+                console.error("Error fetching sensor data:", error);
+                document.getElementById('last-updated').textContent = `Error fetching data at ${new Date().toLocaleTimeString()}. Check console.`;
+            }
+        }
+
+        // Fetch data when the page is loaded, then set interval for updates
+        document.addEventListener('DOMContentLoaded', fetchData);
+        setInterval(fetchData, UPDATE_INTERVAL);
+    </script>
+
+</body>
+</html>
