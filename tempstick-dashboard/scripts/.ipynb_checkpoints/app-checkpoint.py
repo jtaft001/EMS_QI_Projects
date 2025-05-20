@@ -32,8 +32,7 @@ TEMP_WARN_LOW = 35.0
 TEMP_WARN_HIGH = 95.0
 DB_PATH = os.path.expanduser("~/projects/taft_projects/data_analysis/TempStick/data/ninthbrain_incidents.db")
 
-app = Flask(__name__, template_folder='../templates')  
-
+app = Flask(__name__)
 
 # --- Helper Functions ---
 def safe_get_request(url, params=None):

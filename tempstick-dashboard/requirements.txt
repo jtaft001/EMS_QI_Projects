@@ -1,0 +1,6 @@
+Flask>=2.0
+requests>=2.20
+pytz
+gunicorn
+# If you need a specific version of Jinja2, you can add it, e.g.:
+# Jinja2>=3.0

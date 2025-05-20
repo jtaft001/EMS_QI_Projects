@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  flask:
+    build: .
+    container_name: tempstick-flask
+    restart: unless-stopped
+    # expose: - "5000" # Remove this or keep it, but 'ports' is needed for host Nginx
+    ports:
+      - "5000:5000" # Map port 5000 of the container to port 5000 on your host
+    environment:
+      - FLASK_ENV=production
+    volumes:
+      # Mount your SQLite database file into the container
+      # Replace with the actual path to your DB on the host
+      # and the desired path inside the container.
+      - /path/on/your/host/data/ninthbrain_incidents.db:/app_data/ninthbrain_incidents.db
+      # Example if your DB is in the project dir (data/ninthbrain_incidents.db):
+      # - ./data/ninthbrain_incidents.db:/app_data/ninthbrain_incidents.db
+
+#  caddy:
+#    ... (keep commented out or remove)
+
+# volumes:
+#  caddy_data: # Not needed if Caddy is not used
+#  caddy_config: # Not needed if Caddy is not used
