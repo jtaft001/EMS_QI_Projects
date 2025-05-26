@@ -22,8 +22,12 @@ PACIFIC_TZ_STR = "America/Los_Angeles"
 PACIFIC_TZ = ZoneInfo(PACIFIC_TZ_STR) if ZoneInfo else None
 
 # --- Configuration ---
-API_KEY = "6011ead8a3f8e2b361a6d9b4f34c9060b1cf18b05e441d9752"
-BASE_URL = "https://tempstickapi.com/api/v1"
+API_KEY = os.environ.get("API_KEY")
+BASE_URL = os.environ.get("BASE_URL", "https://tempstickapi.com/api/v1")
+
+if not API_KEY:
+    raise ValueError("Missing API_KEY environment variable.")
+
 HEADERS = { "X-API-KEY": API_KEY, "Accept": "application/json" }
 ALERT_HISTORY_DAYS = 7
 TEMP_OK_LOW = 40.0
