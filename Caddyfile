@@ -1,0 +1,3 @@
+dashboard.taftranch.com {
+    reverse_proxy flask:5000
+}
