@@ -1,0 +1,4 @@
+# Ignore raw and cleaned data files
+data/raw/
+data/cleaned/
+*.csv
