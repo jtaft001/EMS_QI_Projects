@@ -1,4 +1,16 @@
-# Ignore raw and cleaned data files
+# Ignore raw and cleaned data
 data/raw/
 data/cleaned/
-*.csv
+
+# Ignore generated outputs
+output/reports/
+output/charts/
+
+# Ignore temporary files
+*.log
+*.tmp
+.DS_Store
+
+# Ignore Python cache
+__pycache__/
+*.pyc
