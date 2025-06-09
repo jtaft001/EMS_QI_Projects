@@ -37,9 +37,9 @@ if "Patient Blood Glucose Level Count (eVitals.18)" in df.columns:
 
 # === Flag aspirin administration ===
 print("💊 Flagging aspirin...")
-if "Medication Given or Administered Description And RXCUI Code (eMedications.03)" in df.columns:
-    df["Aspirin Given"] = df["Medication Given or Administered Description And RXCUI Code (eMedications.03)"] \
-        .astype(str).str.contains("aspirin", case=False, na=False)
+if "Medication Given or Administered Description And RXCUI Code (eM" in df.columns:
+    df["Aspirin Given"] = df["Medication Given or Administered Description And RXCUI Code (eM"] \
+        .str.lower().str.contains("aspirin|asa|687078", na=False)
 else:
     df["Aspirin Given"] = False  # default to False if column not present
 
@@ -74,10 +74,10 @@ columns_to_keep = [
     "Response Type Of Service Requested With Code (eResponse.05)",
     "Patient Blood Glucose Level Count (eVitals.18)",
     "Patient Cincinnati Stroke Scale Used (eVitals.30)",
-    "Unit Arrived At Patient To First 12 Lead ECG Vitals Reading In Minutes",
+    "Unit Arrived At Patient To First 12 Lead ECG Vitals Reading In",
     "Unit Arrived At Patient To First 12 Lead Procedure In Minutes",
-    "Medication Given or Administered Description And RXCUI Code (eMedications.03)",
-    "Aspirin Given"
+    "Medication Given or Administered Description And RXCUI Code (eM",
+    "Aspirin Given",
     "Patient Initial Stroke Scale Score (eVitals.29)"
 ]
 
