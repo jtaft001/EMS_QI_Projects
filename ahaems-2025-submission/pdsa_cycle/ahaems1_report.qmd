@@ -1,0 +1,55 @@
+---
+title: "AHA Measure 1 Performance Report"
+author: "Johnny Taft, EMS QA/PI Coordinator"
+date: "today"
+format: html
+---
+
+## Analysis of AHA Measure 1
+
+This report shows the performance trend for AHA Measure 1, which has seen a significant decline since Q3 2024. This analysis is conducted using Python.
+
+### Performance Data
+
+Here is the data table showing the quarterly performance. We load the data using Pandas and calculate the percentage.
+
+```{python}
+import pandas as pd
+
+# Create a DataFrame similar to your data
+data = {
+    'quarter': ['2024Q1', '2024Q2', '2024Q3', '2024Q4', '2025Q1', '2025Q2'],
+    'denominator': [138, 142, 68, 146, 134, 89],
+    'numerator': [112, 116, 35, 74, 47, 45]
+}
+df = pd.DataFrame(data)
+df['percentage'] = round((df['numerator'] / df['denominator']) * 100, 2)
+
+# Display the DataFrame
+df
+```
+
+### Performance Visualization
+
+The bar chart below clearly illustrates the drop in performance after Q2 2024.
+
+```{python}
+#| echo: false
+#| fig-cap: "Quarterly Performance for AHA Measure 1"
+
+import matplotlib.pyplot as plt
+
+plt.style.use('seaborn-v0_8-whitegrid')
+fig, ax = plt.subplots()
+
+ax.bar(df['quarter'], df['percentage'], color='#4a7c59')
+ax.set_ylabel('Performance (%)')
+ax.set_title('AHA Measure 1 Performance')
+ax.axhline(y=80, color='red', linestyle='--', label='Target (80%)')
+ax.legend()
+plt.ylim(0, 100)
+
+plt.show()
+```
+
+This report will inform the next PDSA cycle.
