@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 import os
 
 # === DB Connection Settings ===
-DB_HOST = "100.118.151.104"
+DB_HOST = "100.124.164.93"
 DB_PORT = "5432"
 DB_NAME = "datalake"
 DB_USER = "jtaft"

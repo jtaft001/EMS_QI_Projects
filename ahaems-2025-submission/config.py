@@ -1,34 +1,38 @@
 # config.py
 
+import os
+from pathlib import Path
+import socket
 import pandas as pd
 from sqlalchemy import create_engine
-from project_paths import DB_HOST
+from dotenv import load_dotenv
 
-# === Database Engine ===
+# === Load environment variables from .env ===
+load_dotenv("/mnt/nasdrive/jupyter/EMS_QI_Projects/ahaems-2025-submission/.env")
+
+# === Database Credentials ===
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+
+# === SQLAlchemy Engine Factory ===
 def get_engine():
-    """
-    Create a SQLAlchemy engine using the resolved DB_HOST.
-    """
-    return create_engine(f"postgresql://jtaft:GunnersMate2003!@{DB_HOST}:5432/datalake")
+    if not all([DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME]):
+        raise ValueError("Missing one or more required DB environment variables.")
+    return create_engine(f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
 
-# === Utility: Load cleaned dataset ===
+# === Load Cleaned Data ===
 def load_cleaned_data(table="ahaems_cleaned"):
-    """
-    Load a table from the connected PostgreSQL database.
-    Default: 'ahaems_cleaned'
-    """
     engine = get_engine()
-    return pd.read_sql(f"SELECT * FROM {table}", con=engine)
+    return pd.read_sql(f'SELECT * FROM "{table}"', con=engine)
 
-# === [Placeholder] AHA Stroke ICDs ===
-# STROKE_ICD_PREFIXES = ["I60", "I61", "I62", "I63", "G45", "G46"]
+# === Print DB Info for Debugging ===
+def print_db_config():
+    print("🔧 DB_HOST:", DB_HOST)
+    print("🔧 DB_PORT:", DB_PORT)
+    print("🔧 DB_USER:", DB_USER)
+    print("🔧 DB_NAME:", DB_NAME)
 
-# === [Placeholder] Cardiac Arrest Codes ===
-# CARDIAC_ARREST_CODES = ["3001003", "3001005"]
-
-# === [Placeholder] Exclusion Acuity Code (Dead w/ Resuscitation) ===
-# EXCLUDE_ACUITY_CODE = "4219909"
-
-# === [Placeholder] Utility: Apply AHA Stroke Filters ===
-# def filter_stroke_cases(df):
-#     ...
+    print("🔧 DEBUG - DB_HOST from env:", os.getenv("DB_HOST"))
